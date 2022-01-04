@@ -21,13 +21,13 @@ dependencies:
   video_player:
     git:
       url: https://github.com/JasmitSingh90/plugins.git
-      ref: feature/AudioConfigurationEnabledIOS_Update
+      ref: plugin-latest-changes
       path: packages/video_player/video_player
 
   chewie:
     git:
       url: https://github.com/JasmitSingh90/chewie.git
-      ref: custom-video-player-changes
+      ref: master
 
   # Plugin for rendering the <iframe> tag.
   webview_flutter: '>=2.0.4 <3.0.0'
@@ -36,7 +36,7 @@ dependencies:
   chewie_audio:
     git:
       url: https://github.com/iAmPlus/chewie_audio.git
-      ref: custom-video-player-changes
+      ref: master
 
   # Plugins for rendering the <svg> tag.
   flutter_svg: '>=0.22.0 <1.0.0'
