@@ -3,20 +3,15 @@ import 'dart:math';
 import 'package:chewie/chewie.dart';
 import 'package:chewie_audio/chewie_audio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:flutter_html/html_parser.dart';
-import 'package:flutter_html/src/anchor.dart';
-import 'package:flutter_html/src/html_elements.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_html/src/utils.dart';
 import 'package:flutter_html/src/widgets/iframe_unsupported.dart'
   if (dart.library.io) 'package:flutter_html/src/widgets/iframe_mobile.dart'
   if (dart.library.html) 'package:flutter_html/src/widgets/iframe_web.dart';
-import 'package:flutter_html/style.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:video_player/video_player.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 
 /// A [ReplacedElement] is a type of [StyledElement] that does not require its [children] to be rendered.
 ///
@@ -29,9 +24,10 @@ abstract class ReplacedElement extends StyledElement {
     required String name,
     required Style style,
     required String elementId,
+    List<StyledElement>? children,
     dom.Element? node,
     this.alignment = PlaceholderAlignment.aboveBaseline,
-  }) : super(name: name, children: [], style: style, node: node, elementId: elementId);
+  }) : super(name: name, children: children ?? [], style: style, node: node, elementId: elementId);
 
   static List<String?> parseMediaSources(List<dom.Element> elements) {
     return elements
@@ -123,21 +119,25 @@ class AudioContentElement extends ReplacedElement {
 
   @override
   Widget toWidget(RenderContext context) {
+    final VideoPlayerController audioController = VideoPlayerController.network(
+      src.first ?? "",
+    );
+    final ChewieAudioController chewieAudioController = ChewieAudioController(
+      videoPlayerController: audioController,
+      autoPlay: autoplay,
+      looping: loop,
+      showControls: showControls,
+      autoInitialize: true,
+    );
+    context.parser.root?.addController(element.hashCode, audioController, isAudioController: true);
+    context.parser.root?.addController(element.hashCode, chewieAudioController);
     return Container(
       key: AnchorKey.of(context.parser.key, this),
       width: context.style.width ?? 300,
       height: Theme.of(context.buildContext).platform == TargetPlatform.android
           ? 48 : 75,
       child: ChewieAudio(
-        controller: ChewieAudioController(
-          videoPlayerController: VideoPlayerController.network(
-            src.first ?? "",
-          ),
-          autoPlay: autoplay,
-          looping: loop,
-          showControls: showControls,
-          autoInitialize: true,
-        ),
+        controller: chewieAudioController,
       ),
     );
   }
@@ -171,24 +171,28 @@ class VideoContentElement extends ReplacedElement {
   Widget toWidget(RenderContext context) {
     final double _width = width ?? (height ?? 150) * 2;
     final double _height = height ?? (width ?? 300) / 2;
+    final VideoPlayerController videoController = VideoPlayerController.network(
+      src.first ?? "",
+    );
+    final ChewieController chewieController = ChewieController(
+      videoPlayerController: videoController,
+      placeholder: poster != null && poster!.isNotEmpty
+          ? Image.network(poster!)
+          : Container(color: Colors.black),
+      autoPlay: autoplay,
+      looping: loop,
+      showControls: showControls,
+      autoInitialize: true,
+      aspectRatio: _width / _height,
+    );
+    context.parser.root?.addController(element.hashCode, videoController);
+    context.parser.root?.addController(element.hashCode, chewieController);
     return AspectRatio(
       aspectRatio: _width / _height,
       child: Container(
         key: AnchorKey.of(context.parser.key, this),
         child: Chewie(
-          controller: ChewieController(
-            videoPlayerController: VideoPlayerController.network(
-              src.first ?? "",
-            ),
-            placeholder: poster != null
-                ? Image.network(poster!)
-                : Container(color: Colors.black),
-            autoPlay: autoplay,
-            looping: loop,
-            showControls: showControls,
-            autoInitialize: true,
-            aspectRatio: _width / _height,
-          ),
+          controller: chewieController,
         ),
       ),
     );
@@ -207,7 +211,7 @@ class SvgContentElement extends ReplacedElement {
     required this.width,
     required this.height,
     required dom.Element node,
-  }) : super(name: name, style: Style(), node: node, elementId: node.id);
+  }) : super(name: name, style: Style(), node: node, elementId: node.id, alignment: PlaceholderAlignment.middle);
 
   @override
   Widget toWidget(RenderContext context) {
@@ -230,22 +234,24 @@ class EmptyContentElement extends ReplacedElement {
 class RubyElement extends ReplacedElement {
   dom.Element element;
 
-  RubyElement({required this.element, String name = "ruby"})
-      : super(name: name, alignment: PlaceholderAlignment.middle, style: Style(), elementId: element.id);
+  RubyElement({
+    required this.element,
+    required List<StyledElement> children,
+    String name = "ruby"
+  }) : super(name: name, alignment: PlaceholderAlignment.middle, style: Style(), elementId: element.id, children: children);
 
   @override
   Widget toWidget(RenderContext context) {
-    dom.Node? textNode;
+    String? textNode;
     List<Widget> widgets = <Widget>[];
-    //TODO calculate based off of parent font size.
     final rubySize = max(9.0, context.style.fontSize!.size! / 2);
     final rubyYPos = rubySize + rubySize / 2;
-    element.nodes.forEach((c) {
-      if (c.nodeType == dom.Node.TEXT_NODE) {
-        textNode = c;
+    context.tree.children.forEach((c) {
+      if (c is TextContentElement) {
+        textNode = c.text;
       }
-      if (c is dom.Element) {
-        if (c.localName == "rt" && textNode != null) {
+      if (!(c is TextContentElement)) {
+        if (c.name == "rt" && textNode != null) {
           final widget = Stack(
             alignment: Alignment.center,
             children: <Widget>[
@@ -255,12 +261,23 @@ class RubyElement extends ReplacedElement {
                       child: Transform(
                           transform:
                               Matrix4.translationValues(0, -(rubyYPos), 0),
-                          child: Text(c.innerHtml,
-                              style: context.style
-                                  .generateTextStyle()
-                                  .copyWith(fontSize: rubySize))))),
-              Container(
-                  child: Text(textNode!.text!.trim(),
+                          child: ContainerSpan(
+                            newContext: RenderContext(
+                              buildContext: context.buildContext,
+                              parser: context.parser,
+                              style: c.style,
+                              tree: c,
+                            ),
+                            style: c.style,
+                            child: Text(c.element!.innerHtml,
+                                style: c.style
+                                    .generateTextStyle()
+                                    .copyWith(fontSize: rubySize)),
+                          )))),
+              ContainerSpan(
+                  newContext: context,
+                  style: context.style,
+                  child: Text(textNode!.trim(),
                       style: context.style.generateTextStyle())),
             ],
           );
@@ -361,6 +378,7 @@ class MathElement extends ReplacedElement {
 
 ReplacedElement parseReplacedElement(
   dom.Element element,
+  List<StyledElement> children,
   NavigationDelegate? navigationDelegateForIframe,
 ) {
   switch (element.localName) {
@@ -435,6 +453,7 @@ ReplacedElement parseReplacedElement(
     case "ruby":
       return RubyElement(
         element: element,
+        children: children,
       );
     case "math":
       return MathElement(

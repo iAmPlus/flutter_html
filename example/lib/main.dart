@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:flutter_math_fork/flutter_math.dart';
 
 void main() => runApp(new MyApp());
 
@@ -267,26 +268,32 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             'h5': Style(maxLines: 2, textOverflow: TextOverflow.ellipsis),
           },
-          customRender: {
-            "table": (context, child) {
-              return SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child:
-                    (context.tree as TableLayoutElement).toWidget(context),
-              );
-            },
-            "bird": (RenderContext context, Widget child) {
-              return TextSpan(text: "🐦");
-            },
-            "flutter": (RenderContext context, Widget child) {
-              return FlutterLogo(
-                style: (context.tree.element!.attributes['horizontal'] != null)
-                    ? FlutterLogoStyle.horizontal
-                    : FlutterLogoStyle.markOnly,
-                textColor: context.style.color!,
-                size: context.style.fontSize!.size! * 5,
-              );
-            },
+          tagsList: Html.tags..addAll(["tex", "bird", "flutter"]),
+          customRenders: {
+            tagMatcher("tex"): CustomRender.widget(widget: (context, buildChildren) => Math.tex(
+              context.tree.element?.innerHtml ?? '',
+              mathStyle: MathStyle.display,
+              textStyle: context.style.generateTextStyle(),
+              onErrorFallback: (FlutterMathException e) {
+                if (context.parser.onMathError != null) {
+                  return context.parser.onMathError!.call(context.tree.element?.innerHtml ?? '', e.message, e.messageWithType);
+                } else {
+                  return Text(e.message);
+                }
+              },
+            )),
+            tagMatcher("bird"): CustomRender.inlineSpan(inlineSpan: (context, buildChildren) => TextSpan(text: "🐦")),
+            tagMatcher("flutter"): CustomRender.widget(widget: (context, buildChildren) => FlutterLogo(
+              style: (context.tree.element!.attributes['horizontal'] != null)
+                  ? FlutterLogoStyle.horizontal
+                  : FlutterLogoStyle.markOnly,
+              textColor: context.style.color!,
+              size: context.style.fontSize!.size! * 5,
+            )),
+            tagMatcher("table"): CustomRender.widget(widget: (context, buildChildren) => SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: (context.tree as TableLayoutElement).toWidget(context),
+            )),
           },
           customImageRenders: {
             networkSourceMatcher(domains: ["flutter.dev"]):

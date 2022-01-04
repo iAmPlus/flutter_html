@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
-import 'package:flutter_html/html_parser.dart';
-import 'package:flutter_html/src/html_elements.dart';
-import 'package:flutter_html/style.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -42,6 +39,26 @@ void testNewParser(BuildContext context) {
     [],
     null,
     context,
+    HtmlParser(
+      key: null,
+      htmlData: HtmlParser.parseHTML(
+          "Hello! <b>Hello, World!</b><i>Hello, New World!</i>"),
+      onLinkTap: null,
+      onAnchorTap: null,
+      onImageTap: null,
+      onCssParseError: null,
+      onImageError: null,
+      onMathError: null,
+      shrinkWrap: false,
+      selectable: true,
+      style: {},
+      customRenders: defaultRenders,
+      imageRenders: defaultImageRenders,
+      tagsList: Html.tags,
+      navigationDelegateForIframe: null,
+      selectionControls: null,
+      scrollPhysics: null,
+    )
   );
   print(tree.toString());
 
@@ -52,6 +69,26 @@ void testNewParser(BuildContext context) {
     [],
     null,
     context,
+    HtmlParser(
+      key: null,
+      htmlData: HtmlParser.parseHTML(
+          "Hello, World! <a href='https://example.com'>This is a link</a>"),
+      onLinkTap: null,
+      onAnchorTap: null,
+      onImageTap: null,
+      onCssParseError: null,
+      onImageError: null,
+      onMathError: null,
+      shrinkWrap: false,
+      selectable: true,
+      style: {},
+      customRenders: defaultRenders,
+      imageRenders: defaultImageRenders,
+      tagsList: Html.tags,
+      navigationDelegateForIframe: null,
+      selectionControls: null,
+      scrollPhysics: null,
+    )
   );
   print(tree.toString());
 
@@ -61,6 +98,25 @@ void testNewParser(BuildContext context) {
     [],
     null,
     context,
+    HtmlParser(
+      key: null,
+      htmlData: HtmlParser.parseHTML("<img src='https://image.example.com' />"),
+      onLinkTap: null,
+      onAnchorTap: null,
+      onImageTap: null,
+      onCssParseError: null,
+      onImageError: null,
+      onMathError: null,
+      shrinkWrap: false,
+      selectable: true,
+      style: {},
+      customRenders: defaultRenders,
+      imageRenders: defaultImageRenders,
+      tagsList: Html.tags,
+      navigationDelegateForIframe: null,
+      selectionControls: null,
+      scrollPhysics: null,
+    )
   );
   print(tree.toString());
 
@@ -71,6 +127,26 @@ void testNewParser(BuildContext context) {
     [],
     null,
     context,
+    HtmlParser(
+      key: null,
+      htmlData: HtmlParser.parseHTML(
+          "<div><div><div><div><a href='link'>Link</a><div>Hello, World! <b>Bold and <i>Italic</i></b></div></div></div></div></div>"),
+      onLinkTap: null,
+      onAnchorTap: null,
+      onImageTap: null,
+      onCssParseError: null,
+      onImageError: null,
+      onMathError: null,
+      shrinkWrap: false,
+      selectable: true,
+      style: {},
+      customRenders: defaultRenders,
+      imageRenders: defaultImageRenders,
+      tagsList: Html.tags,
+      navigationDelegateForIframe: null,
+      selectionControls: null,
+      scrollPhysics: null,
+    )
   );
   print(tree.toString());
 
@@ -82,6 +158,7 @@ void testNewParser(BuildContext context) {
        Your browser does not support the video tag.
       </video>
     """).getElementsByTagName("video")[0],
+    [],
     null,
   );
 
@@ -101,6 +178,7 @@ void testNewParser(BuildContext context) {
         Your browser does not support the audio tag.
       </audio>
     """).getElementsByTagName("audio")[0],
+    [],
     null,
   );
   expect(audioContentElement, isA<AudioContentElement>());
