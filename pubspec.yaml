@@ -27,7 +27,7 @@ dependencies:
   chewie:
     git:
       url: https://github.com/JasmitSingh90/chewie.git
-      ref: master
+      ref: custom-video-player-v1
 
   # Plugin for rendering the <iframe> tag.
   webview_flutter: '>=2.0.4 <4.0.0'
@@ -36,7 +36,7 @@ dependencies:
   chewie_audio:
     git:
       url: https://github.com/iAmPlus/chewie_audio.git
-      ref: master
+      ref: custom-video-player-v1
 
   # Plugins for rendering the <svg> tag.
   flutter_svg: ^0.22.0
